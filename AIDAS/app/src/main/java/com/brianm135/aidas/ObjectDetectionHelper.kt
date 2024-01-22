@@ -4,6 +4,7 @@ import android.os.SystemClock
 import android.util.Log
 import com.google.android.gms.tflite.client.TfLiteInitializationOptions
 import com.google.android.gms.tflite.gpu.support.TfLiteGpu
+import org.tensorflow.lite.support.common.ops.NormalizeOp
 import org.tensorflow.lite.support.image.ImageProcessor
 import org.tensorflow.lite.support.image.TensorImage
 import org.tensorflow.lite.support.image.ops.Rot90Op
@@ -79,7 +80,7 @@ class ObjectDetectionHelper (
 
         val modelName = when(currentModel) {
             MODEL_MOBILENETV1 -> "mobilenetv1.tflite"
-            MODEL_TRAFFIC_LIGHTV1 -> "" // TODO: FILL THIS FILE NAME
+            MODEL_TRAFFIC_LIGHTV1 -> "Road_Sign_Detection_v1.tflite" // TODO: FILL THIS FILE NAME
             else -> "mobilenetv1.tflite"
         }
 
@@ -109,7 +110,24 @@ class ObjectDetectionHelper (
         val imageProcessor = ImageProcessor.Builder().add(Rot90Op(-imageRotation / 90)).build()
 
         // Preprocess the image and convert it into a TensorImage for detection.
-        val tensorImage = imageProcessor.process(TensorImage.fromBitmap(image))
+//        val tensorImage = imageProcessor.process(TensorImage.fromBitmap(image))
+
+        // Preprocess the image and convert it into a TensorImage for detection.
+        val tensorImage = TensorImage.fromBitmap(image)
+        tensorImage.load(image)
+        imageProcessor.process(tensorImage)
+
+        // Manually normalize the input tensor
+        tensorImage.buffer.rewind()
+        val mean = floatArrayOf(0.0f, 0.0f, 0.0f)
+        val std = floatArrayOf(1.0f, 1.0f, 1.0f)
+        for (i in 0 until 3) {
+            for (pixel in 0 until tensorImage.width * tensorImage.height) {
+                val value = (tensorImage.buffer.getFloat() - mean[i]) / std[i]
+                tensorImage.buffer.putFloat(value)
+            }
+        }
+
 
         val results = objectDetector?.detect(tensorImage)
         inferenceTime = SystemClock.uptimeMillis() - inferenceTime
@@ -119,7 +137,6 @@ class ObjectDetectionHelper (
             tensorImage.height,
             tensorImage.width)
     }
-
 
     interface DetectorListener {
         fun onInitialized()

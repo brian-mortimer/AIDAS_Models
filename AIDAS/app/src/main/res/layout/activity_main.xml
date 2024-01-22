@@ -14,11 +14,30 @@
         app:layout_constraintGuide_percent=".50" />
 
     <Button
-        android:id="@+id/cameraBtn"
-        android:layout_width="wrap_content"
+        android:id="@+id/liveCameraBtn"
+        android:layout_width="220dp"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="128dp"
-        android:text="Camera"
+        android:layout_marginBottom="32dp"
+        android:text="Live Camera"
+        app:layout_constraintBottom_toTopOf="@+id/modelSelectionDropDown"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/selectFromGallaryBtn"
+        android:layout_width="220dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="32dp"
+        android:text="Select From Gallery"
+        app:layout_constraintBottom_toTopOf="@+id/liveCameraBtn"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Spinner
+        android:id="@+id/modelSelectionDropDown"
+        android:layout_width="220dp"
+        android:layout_height="48dp"
+        android:layout_marginBottom="100dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />

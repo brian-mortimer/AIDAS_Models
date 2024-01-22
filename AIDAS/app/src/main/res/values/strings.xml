@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">AIDAS</string>
+    <string-array name="models">
+        <item>Pedestrian V1</item>
+        <item>Traffic Sign V1</item>
+    </string-array>
 </resources>

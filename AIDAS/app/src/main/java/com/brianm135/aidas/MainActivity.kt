@@ -1,21 +1,12 @@
 package com.brianm135.aidas
 
-import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.core.Preview
-import androidx.camera.core.CameraSelector
-import android.util.Log
 import android.view.View
+import android.widget.ArrayAdapter
+import android.widget.Spinner
 import com.brianm135.aidas.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -28,15 +19,42 @@ class MainActivity : AppCompatActivity() {
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(viewBinding.root)
 
-        val baseModel = 0
+        var selectedModel = 0
 
-        val btnNavigate: View = findViewById(R.id.cameraBtn)
+        val liveCameraBtn: View = findViewById(R.id.liveCameraBtn)
+        val selectFromGalleryBtn: View = findViewById(R.id.selectFromGallaryBtn)
+        val modelSelectionDropDown: Spinner = findViewById(R.id.modelSelectionDropDown)
 
-        btnNavigate.setOnClickListener{
+        // Populate modelSelectionDropdown spinner
+        ArrayAdapter.createFromResource(this, R.array.models,android.R.layout.simple_spinner_item).also { adapter ->
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+            modelSelectionDropDown.adapter = adapter
+        }
+
+        // Add click listener to LiveCameraBtn
+        liveCameraBtn.setOnClickListener{
+            // Get the selected model
+            selectedModel = getSelectedModel(modelSelectionDropDown)
+
             val intent = Intent(this, CameraActivity::class.java)
-            intent.putExtra("model", baseModel)
+            intent.putExtra("model", selectedModel)
             startActivity(intent)
         }
+
+        // Add click listener to SelectFromGalleryBtn
+        selectFromGalleryBtn.setOnClickListener{
+            // Get the selected model
+            selectedModel = getSelectedModel(modelSelectionDropDown)
+
+            val intent = Intent(this, SelectFromGallery::class.java)
+            intent.putExtra("model", selectedModel)
+            startActivity(intent)
+        }
+
+    }
+
+    private fun getSelectedModel(modelSelectionDropdown: Spinner): Int {
+        return modelSelectionDropdown.selectedItemId.toInt()
     }
 
 
