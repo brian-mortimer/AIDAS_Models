@@ -1,9 +1,11 @@
 import android.content.Context
 import android.graphics.Bitmap
+import android.os.Debug
 import android.os.SystemClock
 import android.util.Log
 import com.google.android.gms.tflite.client.TfLiteInitializationOptions
 import com.google.android.gms.tflite.gpu.support.TfLiteGpu
+import org.tensorflow.lite.InterpreterApi
 import org.tensorflow.lite.support.common.ops.NormalizeOp
 import org.tensorflow.lite.support.image.ImageProcessor
 import org.tensorflow.lite.support.image.TensorImage
@@ -12,6 +14,11 @@ import org.tensorflow.lite.task.core.BaseOptions
 import org.tensorflow.lite.task.gms.vision.TfLiteVision
 import org.tensorflow.lite.task.gms.vision.detector.Detection
 import org.tensorflow.lite.task.gms.vision.detector.ObjectDetector
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 class ObjectDetectionHelper (
     var threshold: Float = 0.5f,
@@ -85,8 +92,7 @@ class ObjectDetectionHelper (
         }
 
         try {
-            objectDetector =
-                ObjectDetector.createFromFileAndOptions(context, modelName, optionsBuilder.build())
+            objectDetector = ObjectDetector.createFromFileAndOptions(context, modelName, optionsBuilder.build())
         } catch (e: Exception) {
             objectDetectorListener.onError(
                 "Object detector failed to initialize. See error logs for details"
@@ -95,48 +101,117 @@ class ObjectDetectionHelper (
         }
     }
 
-    fun detect(image: Bitmap, imageRotation: Int) {
-        if (!TfLiteVision.isInitialized()) {
-            Log.e(TAG, "detect: TfLiteVision is not initialized yet")
-            return
-        }
+//    fun detect(image: Bitmap, imageRotation: Int) {
+//        if (!TfLiteVision.isInitialized()) {
+//            Log.e(TAG, "detect: TfLiteVision is not initialized yet")
+//            return
+//        }
+//
+//        if (objectDetector == null) {
+//            setupObjectDetector()
+//        }
+//        var inferenceTime = SystemClock.uptimeMillis()
+//
+//        // Create preprocessor for the image.
+//        val imageProcessor = ImageProcessor.Builder().add(Rot90Op(-imageRotation / 90)).build()
+//
+//        // Preprocess the image and convert it into a TensorImage for detection.
+////        val tensorImage = imageProcessor.process(TensorImage.fromBitmap(image))
+//
+//        // Preprocess the image and convert it into a TensorImage for detection.
+//        val tensorImage = TensorImage.fromBitmap(image)
+//        tensorImage.load(image)
+//        imageProcessor.process(tensorImage)
+//
+//        // Manually normalize the input tensor
+//        tensorImage.buffer.rewind()
+//        val mean = floatArrayOf(0.0f, 0.0f, 0.0f)
+//        val std = floatArrayOf(1.0f, 1.0f, 1.0f)
+//        for (i in 0 until 3) {
+//            for (pixel in 0 until tensorImage.width * tensorImage.height) {
+//                val value = (tensorImage.buffer.getFloat() - mean[i]) / std[i]
+//                tensorImage.buffer.putFloat(value)
+//            }
+//        }
+//        val results = objectDetector?.detect(tensorImage)
+//        Log.d("TEST", results.toString())
+//
+//        inferenceTime = SystemClock.uptimeMillis() - inferenceTime
+//        objectDetectorListener.onResults(
+//            results,
+//            inferenceTime,
+//            tensorImage.height,
+//            tensorImage.width)
+//    }
+fun detect(image: Bitmap, imageRotation: Int) {
+    if (!TfLiteVision.isInitialized()) {
+        Log.e(TAG, "detect: TfLiteVision is not initialized yet")
+        return
+    }
 
-        if (objectDetector == null) {
-            setupObjectDetector()
-        }
-        var inferenceTime = SystemClock.uptimeMillis()
 
-        // Create preprocessor for the image.
-        val imageProcessor = ImageProcessor.Builder().add(Rot90Op(-imageRotation / 90)).build()
+    var inferenceTime = SystemClock.uptimeMillis()
 
-        // Preprocess the image and convert it into a TensorImage for detection.
+    // Create preprocessor for the image.
+    val imageProcessor = ImageProcessor.Builder().add(Rot90Op(-imageRotation / 90)).build()
+
+    // Preprocess the image and convert it into a TensorImage for detection.
 //        val tensorImage = imageProcessor.process(TensorImage.fromBitmap(image))
 
-        // Preprocess the image and convert it into a TensorImage for detection.
-        val tensorImage = TensorImage.fromBitmap(image)
-        tensorImage.load(image)
-        imageProcessor.process(tensorImage)
+    // Preprocess the image and convert it into a TensorImage for detection.
+    val tensorImage = TensorImage.fromBitmap(image)
+    tensorImage.load(image)
+    imageProcessor.process(tensorImage)
 
-        // Manually normalize the input tensor
-        tensorImage.buffer.rewind()
-        val mean = floatArrayOf(0.0f, 0.0f, 0.0f)
-        val std = floatArrayOf(1.0f, 1.0f, 1.0f)
-        for (i in 0 until 3) {
-            for (pixel in 0 until tensorImage.width * tensorImage.height) {
-                val value = (tensorImage.buffer.getFloat() - mean[i]) / std[i]
-                tensorImage.buffer.putFloat(value)
-            }
+    // Manually normalize the input tensor
+    tensorImage.buffer.rewind()
+    val mean = floatArrayOf(0.0f, 0.0f, 0.0f)
+    val std = floatArrayOf(1.0f, 1.0f, 1.0f)
+    for (i in 0 until 3) {
+        for (pixel in 0 until tensorImage.width * tensorImage.height) {
+            val value = (tensorImage.buffer.getFloat() - mean[i]) / std[i]
+            tensorImage.buffer.putFloat(value)
         }
-
-
-        val results = objectDetector?.detect(tensorImage)
-        inferenceTime = SystemClock.uptimeMillis() - inferenceTime
-        objectDetectorListener.onResults(
-            results,
-            inferenceTime,
-            tensorImage.height,
-            tensorImage.width)
     }
+
+
+    val modelName = when(currentModel) {
+        MODEL_MOBILENETV1 -> "mobilenetv1.tflite"
+        MODEL_TRAFFIC_LIGHTV1 -> "Road_Sign_Detection_v1.tflite" // TODO: FILL THIS FILE NAME
+        else -> "mobilenetv1.tflite"
+    }
+    val modelFile: File = loadModelFromAssets(this.context, modelName)
+    val options: InterpreterApi.Options = InterpreterApi.Options()
+    val interpreter = InterpreterApi.create(modelFile, options)
+
+    Log.d("TEST", "shape ${interpreter.getOutputTensor(0)}")
+
+
+    val outputBuffer: ByteBuffer = ByteBuffer.allocateDirect(interpreter.getOutputTensor(0).numBytes())
+    outputBuffer.order(ByteOrder.nativeOrder())
+
+    interpreter.run(tensorImage, outputBuffer )
+
+
+    inferenceTime = SystemClock.uptimeMillis() - inferenceTime
+}
+
+    fun loadModelFromAssets(context: Context, path: String): File {
+        val assetManager = context.assets
+        val inputStream: InputStream = assetManager.open(path)
+        val outputFile = File(context.cacheDir, path)
+
+        FileOutputStream(outputFile).use { outputStream ->
+            val buffer = ByteArray(4*1024)
+            var read: Int
+            while (inputStream.read(buffer).also { read = it } != -1) {
+                outputStream.write(buffer, 0, read)
+            }
+            outputStream.flush()
+        }
+        return outputFile
+    }
+
 
     interface DetectorListener {
         fun onInitialized()
