@@ -150,23 +150,23 @@ class CameraActivity : AppCompatActivity(), ObjectDetectionHelper.DetectorListen
         }.toTypedArray()
     }
 
-    private val activityResultLauncher = registerForActivityResult(
-            ActivityResultContracts.RequestMultiplePermissions())
-        { permissions ->
-            // Handle Permission granted/rejected
-            var permissionGranted = true
-            permissions.entries.forEach {
-                if (it.key in REQUIRED_PERMISSIONS && it.value == false)
-                    permissionGranted = false
+        private val activityResultLauncher = registerForActivityResult(
+                ActivityResultContracts.RequestMultiplePermissions())
+            { permissions ->
+                // Handle Permission granted/rejected
+                var permissionGranted = true
+                permissions.entries.forEach {
+                    if (it.key in REQUIRED_PERMISSIONS && it.value == false)
+                        permissionGranted = false
+                }
+                if (!permissionGranted) {
+                    Toast.makeText(baseContext,
+                        "Permission request denied",
+                        Toast.LENGTH_SHORT).show()
+                } else {
+                    startCamera()
+                }
             }
-            if (!permissionGranted) {
-                Toast.makeText(baseContext,
-                    "Permission request denied",
-                    Toast.LENGTH_SHORT).show()
-            } else {
-                startCamera()
-            }
-        }
 
     override fun onResults(
         results: MutableList<Detection>?,

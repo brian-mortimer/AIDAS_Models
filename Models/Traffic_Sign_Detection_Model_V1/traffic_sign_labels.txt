@@ -1,0 +1,43 @@
+20 Speed Limit
+30 Speed Limit
+50 Speed Limit
+60 Speed Limit
+70 Speed Limit
+80 Speed Limit
+80 Rural Speed Limit
+100 Speed Limit
+120 Speed Limit
+No Overtaking
+Heavy Veichle No Overtaking
+Crossroads Ahead
+General Caution
+Give Way
+Stop
+No Entry (Except Bikes)
+No Heavy Veichles
+No Entry
+Approaching Hazard
+Left Turn
+Right Turn
+Reverse Left Bend
+Bumpy Surface
+Slippery Surface
+Right Lane Narrows
+Road Works
+Traffic Lights
+Pedestrian Crossing
+Children Playing
+No Cycling
+Junction
+Deer
+Rural Speed Limit
+Go Right
+Go Left
+Go Straight
+Go Right/Straight
+Go Left/Straight
+Keep Right
+Keep Left
+roundabout
+End of No Overtaking
+End of Heavy Veichle No Overtaking
